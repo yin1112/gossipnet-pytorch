@@ -5,6 +5,11 @@ _Learning non-maximum suppression. Jan Hosang, Rodrigo Benenson, Bernt Schiele. 
 
 You can find the project page with downloads here: https://mpi-inf.mpg.de/learning-nms
 
+## Software Requirements
+- torch : 1.7.1.post2
+- numpy : 1.19.5
+- protoc : libprotoc 3.13.0
+
 ## First
 
 Run `make` in the home directory to compile protobufs
