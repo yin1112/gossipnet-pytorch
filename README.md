@@ -7,11 +7,11 @@ You can find the project page with downloads here: https://mpi-inf.mpg.de/learni
 
 ## First
 
-Run `make` to compile  protobufs.
+Run `make` in the home directory to compile protobufs
 
 ## Second
 
-Download the data according to the prompt in the data directory
+Download the files according to the addresses in `./data/readme` and `./data/coco/annotations/README` files
 
 ## Third
 
