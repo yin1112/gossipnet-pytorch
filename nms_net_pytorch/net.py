@@ -170,7 +170,7 @@ class Gnet(nn.Module):
         # input()  
         pw_feats = self.pw_feats_fc(pw_feats)
         
-        pw_feats = Variable(pw_feats , requires_grad = True)
+        #pw_feats = Variable(pw_feats , requires_grad = True)
         # sto = pw_feats[:3 , :]
         # with open('scores.txt','w') as f:
         #     f.write( str(sto) )
