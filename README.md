@@ -5,8 +5,15 @@ _Learning non-maximum suppression. Jan Hosang, Rodrigo Benenson, Bernt Schiele. 
 
 You can find the project page with downloads here: https://mpi-inf.mpg.de/learning-nms
 
-## Setup
+## First
 
 Run `make` to compile  protobufs.
 
+## Second
+
+Download the data according to the prompt in the data directory
+
+## Third
+
+run `python train.py --config=experiments/coco_person/conf.yaml` 
 
