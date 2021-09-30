@@ -35,8 +35,8 @@ def load_obj(name ):
         return pickle.load(f)
 
 def get_dataset():
-    # train_imdb = imdb.get_imdb(cfg.train.imdb , is_training=True)
-    train_imdb = load_obj("t1")
+    train_imdb = imdb.get_imdb(cfg.train.imdb , is_training=True)
+    # train_imdb = load_obj("t1")
 
 
     val_imdb = imdb.get_imdb(cfg.train.val_imdb , is_training=False)
