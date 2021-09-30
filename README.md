@@ -5,17 +5,15 @@ _Learning non-maximum suppression. Jan Hosang, Rodrigo Benenson, Bernt Schiele. 
 
 You can find the project page with downloads here: https://mpi-inf.mpg.de/learning-nms
 
-## Setup
+## First
 
-Run `make` to compile C++ code and protobufs.
+Run `make` in the home directory to compile protobufs
 
-Link to the coco API in the root directory, like so:
-```
-/work/src/tf-gnet$ ln -s /work/src/coco/PythonAPI/pycocotools
-```
+## Second
 
-Link to coco annotations/images in the data subdir:
-```
-/work/src/tf-gnet/data$ ln -s /datasets/coco
-```
+Download the files according to the addresses in `./data/readme` and `./data/coco/annotations/README` files
+
+## Third
+
+run `python train.py --config=experiments/coco_person/conf.yaml` 
 
