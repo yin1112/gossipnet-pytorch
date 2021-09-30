@@ -13,5 +13,5 @@ image info  live here
 
 you can download them here: 
 
-- 'https://datasets.d2.mpi-inf.mpg.de/hosang17cvpr/coco_minival2014.tar.gz'
-- 'http://images.cocodataset.org/annotations/annotations_trainval2014.zip'
+- https://datasets.d2.mpi-inf.mpg.de/hosang17cvpr/coco_minival2014.tar.gz
+- http://images.cocodataset.org/annotations/annotations_trainval2014.zip
