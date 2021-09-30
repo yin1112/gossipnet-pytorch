@@ -7,15 +7,6 @@ You can find the project page with downloads here: https://mpi-inf.mpg.de/learni
 
 ## Setup
 
-Run `make` to compile C++ code and protobufs.
+Run `make` to compile  protobufs.
 
-Link to the coco API in the root directory, like so:
-```
-/work/src/tf-gnet$ ln -s /work/src/coco/PythonAPI/pycocotools
-```
-
-Link to coco annotations/images in the data subdir:
-```
-/work/src/tf-gnet/data$ ln -s /datasets/coco
-```
 
