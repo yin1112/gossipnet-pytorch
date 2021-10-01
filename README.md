@@ -9,7 +9,7 @@ You can find the project page with downloads here: https://mpi-inf.mpg.de/learni
 - torch : 1.7.1.post2
 - numpy : 1.19.5
 - protoc : libprotoc 3.13.0
-
+- scipy : 1.1.0
 ## First
 
 Run `make` in the home directory to compile protobufs
