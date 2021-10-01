@@ -9,14 +9,14 @@ You can find the project page with downloads here: https://mpi-inf.mpg.de/learni
 - torch : 1.7.1.post2
 - numpy : 1.19.5
 - protoc : libprotoc 3.13.0
-
+- scipy : 1.1.0
 ## First
 
 Run `make` in the home directory to compile protobufs
 
 ## Second
 
-Download the files according to the addresses in `./data/readme` and `./data/coco/annotations/README` files
+Download the files according to the addresses in `./data/README` and `./data/coco/annotations/README` files
 
 ## Third
 
