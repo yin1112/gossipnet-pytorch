@@ -26,20 +26,10 @@ torch.set_printoptions(profile="full")
 np.set_printoptions(threshold = 1e6)
 
 
-def save_obj(obj, name ):
-    with open('obj/'+ name + '.pkl', 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-def load_obj(name ):
-    with open('obj/' + name + '.pkl', 'rb') as f:
-        return pickle.load(f)
-
 def get_dataset():
     train_imdb = imdb.get_imdb(cfg.train.imdb , is_training=True)
-    # train_imdb = load_obj("t1")
 
 
-    val_imdb = imdb.get_imdb(cfg.train.val_imdb , is_training=False)
 
     return ShuffledDataset(train_imdb) , train_imdb 
 
@@ -193,14 +183,7 @@ def _compute_ap(scores, labels, num_objs):
 	      #    print (layer,param)
         #input()
 
-def setup_seed(seed):
-     torch.manual_seed(seed)
-     torch.cuda.manual_seed_all(seed)
-     np.random.seed(seed)
-    #  random.seed(seed)
-     torch.backends.cudnn.deterministic = True
-# 设置随机数种子
-setup_seed(20)
+
 class Train:
 
     num_classes = None
@@ -216,7 +199,7 @@ class Train:
         self.train_sets,self.train_imdb= get_dataset()
         
         self.load_dict =""
-        self.save_dict =save_dict
+        self.save_dict =""
         if  self.load_dict!=""  and os.path.exists(self.load_dict):
             print("load weights")
             self.gnet = torch.load(self.load_dict)
@@ -240,7 +223,7 @@ class Train:
 
 
         if cfg.train.optimizer == 'adam':
-            self.optimizer =  torch.optim.SGD(self.gnet.parameters() ,lr = 0.001  )
+            self.optimizer =  torch.optim.Adam(self.gnet.parameters() ,lr = 0.001  )
         elif cfg.train.optimizer == 'sgd':
             self.optimizer = torch.optim.sgd(
                 momentum=cfg.train.momentum ,lr = 0.0001)

@@ -155,8 +155,8 @@ class Gnet(nn.Module):
 
 
 
-        out_feats = torch.zeros([num_dets, cfg.gnet.shortcut_dim] )
-        out_feats = Variable(out_feats , requires_grad = True)
+        out_feats = torch.zeros([num_dets, cfg.gnet.shortcut_dim] ).to(device)
+        # out_feats = Variable(out_feats , requires_grad = True)
         # sto = pw_feats[:50]
         # with open('scores.txt','w') as f:
         #     f.write( str(sto) )

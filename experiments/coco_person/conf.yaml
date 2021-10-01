@@ -20,5 +20,5 @@ train:
   pos_weight: 0.1
   save_iter: 20000
   val_imdb: coco_2014_minival
-  val_iter: 20000
+  val_iter: 10000
   weight_decay: 0.0005
