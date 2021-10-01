@@ -16,7 +16,7 @@ Run `make` in the home directory to compile protobufs
 
 ## Second
 
-Download the files according to the addresses in `./data/readme` and `./data/coco/annotations/README` files
+Download the files according to the addresses in `./data/README` and `./data/coco/annotations/README` files
 
 ## Third
 
