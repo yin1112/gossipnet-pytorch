@@ -9,56 +9,31 @@ np.set_printoptions(threshold = 1e6)
 from nms_net_pytorch import cfg
 from nms_net_pytorch.criterion import Criterion
 from nms_net_pytorch.matching import DetectionMatching
-from torch.autograd import Variable
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Run_net:
 
-    gnet = None
-    optimizer = None
-    num_classes = None
-    dets = None
-    det_scores = None
-    det_classes = None
-    gt_boxes = None
-    gt_crowd = None
-    gt_classes = None
-    class_weights = None
-    cnt =0
 
-    def __init__(self  ):
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    def __init__(self ,gnet ,device ,num_classes ,class_weights ):
+        self.num_classes = num_classes.to(device)
+        self.class_weights = class_weights.to(device)
         self.criterion = Criterion().to(device)
-
-    def setdata(self ,gnet,optimizer, num_classes , dets,det_scores ,det_classes, gt_boxes ,gt_classes, gt_crowd,class_weights = None):
         self.gnet = gnet
-        self.optimizer = optimizer
-        self.num_classes = num_classes
+        self.device = device
+
+    def setdata(self , dets,det_scores ,det_classes, gt_boxes ,gt_classes, gt_crowd):
+        
         self.dets = dets
         self.det_scores = det_scores
         self.det_classes = det_classes
         self.gt_boxes = gt_boxes
         self.gt_classes = gt_classes
         self.gt_crowd = gt_crowd
-        self.class_weights = class_weights
 
-    def run_net(self , ema,istraining = False ):
+    def run_net(self ):
 
-        # print("-----------------")
-        # print(self.det_classes)
-        # print("---------------")
-        # print(self.gt_classes)
-        # print("-------------")
-        # input()
 
-        # sto = self.gt_boxes
-        # with open('scores.txt','w') as f:
-        #    f.write( str(sto) )
-        # print("input : ")
-        # input()
 
         self.multiclass = self.num_classes > 1
-
         ''' 
             dets_boxdata:  torch.Size([519, 7])
             gt_boxesdata:  torch.Size([17, 7])
@@ -66,8 +41,6 @@ class Run_net:
         '''
         self.dets_boxdata = self._xyxy_to_boxdata(self.dets)
         self.gt_boxesdata = self._xyxy_to_boxdata(self.gt_boxes)
-
-
 
         '''
             det_anno_iou =   torch.Size([519, 17])
@@ -83,7 +56,7 @@ class Run_net:
             '''
             same_class = torch.eq(self.det_classes.reshape(-1, 1),
                                   self.gt_classes.reshape(1, -1))
-            zeros = torch.zeros_like(self.det_anno_iou)
+            zeros = torch.zeros_like(self.det_anno_iou).to(self.device)
             self.det_anno_iou = torch.where(same_class, self.det_anno_iou, zeros)
 
 
@@ -101,7 +74,6 @@ class Run_net:
             pw_feats = torch.Size([52569, 167])
         '''
         pw_feats = (self._geometry_feats(pair_c_idxs, pair_n_idxs) * cfg.gnet.pw_feat_multiplyer) # check ok 
-        # pw_feats = Variable(pw_feats , requires_grad = True )
         '''
             new_score = torch.Size([519, 1])
         '''
@@ -115,54 +87,6 @@ class Run_net:
         labels, weights, det_gt_matching = \
             DetectionMatching(self.det_anno_iou, new_score, self.gt_crowd) #check ok 
 
-        # print(labels.requires_grad)
-        # print(weights.requires_grad)
-        # print(det_gt_matching.requires_grad)
-        # new_score = np.load("/home/wusl/qinhua/gossipnet-master/nms_net_pytorch/scores.npy")
-        # _ious =  np.load("/home/wusl/qinhua/gossipnet-master/nms_net_pytorch/scores1.npy")
-        # _score = np.load("/home/wusl/qinhua/gossipnet-master/nms_net_pytorch/scores2.npy")
-        # _ignore = np.load("/home/wusl/qinhua/gossipnet-master/nms_net_pytorch/scores3.npy")
-        # _ious = torch.tensor(_ious)
-        # _score = torch.tensor(_score)
-        # _ignore = torch.tensor(_ignore)
-        # new_score =torch.tensor(new_score)
-        # labels , weights , det_gt_matching = DetectionMatching(_ious,_score,_ignore)
-
-
-        # print(labels.requires_grad)
-        # print(weights.requires_grad)
-        # print(det_gt_matching.requires_grad)
-        # print(new_score.requires_grad)
-        # input()
-        # new_score = new_score.reshape(-1)
-        # weights =weights.reshape(-1)
-        # mask = weights>0
-        # new_score = new_score[mask]
-        # weights = weights[mask]
-        # labels = labels[mask]
-        # mask = torch.argsort(-new_score)
-        # new_score = new_score[mask]
-        # # weights = weights[mask]
-        # labels = labels[mask]
-        # print(new_score.shape)
-        # print(labels.shape)
-        # print(weights.shape)
-        # print(det_gt_matching.shape)
-        # print(self.gt_classes.shape)
-        # print(self.gt_boxes.shape)
-        # print(self.det_scores.shape)
-        # sto = new_score
-        # with open('scores0.txt','w') as f:
-        #     f.write( str(sto) )
-        # sto = labels
-        # with open('scores1.txt','w') as f:
-        #     f.write( str(sto) )
-        # sto = det_gt_matching
-        # with open('scores2.txt','w') as f:
-        #     f.write( str(sto) )
-        # print("input : ")
-        # input()
-
         '''
             self.class_weights = (81,)
             det_crowd = torch.Size([519])
@@ -170,25 +94,25 @@ class Run_net:
         '''
         self.class_weights = self.class_weights.reshape(-1)
         if self.class_weights is None:  
-            self.class_weights = torch.ones((self.num_classes + 1), dtype=torch.float32)
+            self.class_weights = torch.ones((self.num_classes + 1), dtype=torch.float32).to(self.device)
         # else:
-        #     class_weights = torch.tensor(class_weights, dtype=torch.float32)
+        #     class_weights = torch.tensor(self.class_weights, dtype=torch.float32)
 
         self.gt_crowd = self.gt_crowd.reshape(-1)
         if self.gt_crowd.shape[0] > 0:
             det_crowd = self.gt_crowd[torch.clamp(det_gt_matching, min=0).to(torch.long)]
             det_crowd[det_gt_matching==-1] = 0
         else:
-            det_crowd = torch.zeros_like(labels, dtype=torch.bool)
+            det_crowd = torch.zeros_like(labels, dtype=torch.bool).to(self.device)
         
         if self.gt_crowd.shape[0] > 0:
             det_class = self.gt_classes[torch.clamp(det_gt_matching, min=0).to(torch.long)].to(torch.long)
             det_class[det_gt_matching==-1] = 0
 
         else:
-            det_class = torch.zeros_like(labels, dtype=torch.long)
+            det_class = torch.zeros_like(labels, dtype=torch.long).to(self.device)
         
-        zeros = torch.zeros_like(det_class)
+        zeros = torch.zeros_like(det_class).to(self.device)
 
         det_class = torch.where(
             torch.logical_and(det_gt_matching >= 0, torch.logical_not(det_crowd)),
@@ -200,106 +124,23 @@ class Run_net:
 
         weights = (weights.reshape(-1, 1) * sample_weights.reshape(-1, 1)).reshape(-1)
 
-
-        # sto = weights
-        # with open('scores.txt','w') as f:
-        #     f.write( str(sto) )
-        # print("input : ")
-        # input()
-
-        #Optimization of scores for positive tags
-        # mask =  np.logical_or ( np.logical_and(labels.reshape(-1)>0 , new_score.reshape(-1)<=0),np.logical_and(labels.reshape(-1)==0 , new_score.reshape(-1)>0) ) 
-        # print(mask)
-        # if sum(mask==True)>0:
-        #     k1  = np.linspace(.0, 2.00,sum(mask == True),
-        #                    endpoint=True)
-        #     weights[mask] = weights[mask] + k1
-        # mask = np.logical_and(labels.reshape(-1)==1 , new_score.reshape(-1)<=0)
-        # weights = torch.where(mask , weights*5  , 0.5*weights)
-        # print(mask.shape)
-        # print(k1.shape)
-        # print(weights[mask].shape)
-        # print(weights.shape)
-        # input()
-
-
-
-
         prediction = new_score.reshape(-1)
-
-        # print(weights.requires_grad)
-        # print(prediction.requires_grad)
-        # print(prediction.shape , labels.shape , weights.shape)
-
 
         sample_loss = self.criterion(prediction, labels)
 
-        # print(sample_loss.requires_grad)
-
-
         weights_losses = sample_loss.reshape(-1, 1) * weights.reshape(-1, 1)
-
-        # print(weights_losses.requires_grad)
-
-        # input()
-        # sto = weights_losses
-        # with open('scores2.txt','w') as f:
-        #     f.write( str(sto) )
-        
-        # sto = labels
-        # with open('scores3.txt','w') as f:
-        #     f.write( str(sto) )
-        # print("input : ")
-        # input()
 
         loss_unnormed = torch.sum(weights_losses)
         loss_normed = torch.mean(weights_losses)
-
-
-
-
 
         if cfg.train.normalize_loss:
             loss = loss_normed * cfg.train.loss_multiplyer
         else:
             loss = loss_unnormed * cfg.train.loss_multiplyer
 
-        if istraining:
-
-        # print(loss)
-        # input()
-            self.optimizer.zero_grad()            
-            loss.backward()
-
-            # self.cnt+=1            
-            # if self.cnt >10:
-
-            #     with open('weights.txt','w') as f:
-            #         for name, parms in self.gnet.named_parameters():	
-            #                 sto = ('-->name:', name, '-->grad_requirs:',parms.requires_grad, \
-            #         ' -->grad_value:',parms.grad)
-            #                 f.write( str(sto) )
-            #     print("---")
-            #     input()
-                # for m in self.gnet.modules(): # 继承nn.Module的方法
-                #     if type(m)==torch.nn.modules.linear.Linear:
-                #         print(m.weight)
-                # print("--------------")
-                # input()
-            # print("--------------------")
-            # input()
-            
-            
-            self.optimizer.step()
-            ema.update()
-        
-        # sto = new_score
-        # with open('scores.txt','w') as f:
-        #    f.write( str(sto) )
-        # print("input : ")
-        # input()
-        return new_score ,labels , loss_unnormed, loss_normed ,weights
-
+        return new_score , labels, weights, det_gt_matching ,\
+                loss_unnormed , loss_normed , loss
+       
     def _xyxy_to_boxdata(self, a):
         ax1 = a[:, 0].reshape(-1, 1)
         ay1 = a[:, 1].reshape(-1, 1)
