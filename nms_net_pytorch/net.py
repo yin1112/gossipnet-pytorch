@@ -9,8 +9,8 @@ from nms_net_pytorch.config import cfg
 from torch_scatter import scatter_max
 
 import numpy as np
-torch.set_printoptions(profile="full")
-np.set_printoptions(threshold = 1e6)
+# torch.set_printoptions(profile="full")
+# np.set_printoptions(threshold = 1e6)
 
 
 def fc(infeature , outfeature ,fc_num , Have_ReLu = True,Have_Bn =  False):
@@ -48,23 +48,21 @@ class Block(nn.Module):
     def forward(self,infeats ,  pw_feats ,dets_num ,c_idxs ,n_idxs):
         
 
-
-        #infeats 上一个block的输入 ， pw_feats 人工特征
         t_infeats = self.reduce_dim(infeats)
 
 
-        c_feats = t_infeats[c_idxs]#取得各自预测框信息
-        n_feats = t_infeats[n_idxs]#取得各自预测框信息
+        c_feats = t_infeats[c_idxs]
+        n_feats = t_infeats[n_idxs]
 
         is_id_row = torch.eq(c_idxs,n_idxs).reshape(-1,1).to(self.device)
         zeros = torch.zeros_like(n_feats).to(self.device)
         n_feats = torch.where(is_id_row,zeros,n_feats)
 
 
-        feats = torch.cat((pw_feats,c_feats  , n_feats),1) #得到pairwise_context
+        feats = torch.cat((pw_feats,c_feats  , n_feats),1) #get pairwise_context
         
 
-        feats = self.pw_fc(feats)#Fc序列
+        feats = self.pw_fc(feats)
         #pooling        
         c_idxs = c_idxs.reshape(-1,1)
         tmp_feats ,idx = scatter_max(feats, c_idxs, dim=0)
@@ -121,10 +119,10 @@ class Gnet(nn.Module):
         return torch.nn.Sequential(*pw_feats_fc)
 
     def _init_weight(self):
-        for m in self.modules(): # 继承nn.Module的方法
+        for m in self.modules(): 
             
             if type(m)==torch.nn.modules.linear.Linear:
-                torch.nn.init.xavier_uniform(m.weight)
+                torch.nn.init.xavier_uniform_(m.weight)
                 m.bias.data.fill_(0.01)
             elif type(m)==torch.nn.modules.batchnorm.BatchNorm1d:
                 pass

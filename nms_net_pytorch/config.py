@@ -49,7 +49,7 @@ cfg.train.max_num_detections = -1
 cfg.train.normalize_loss = False
 cfg.train.histograms = False
 cfg.train.loss_multiplyer = 1.0
-cfg.train.max_epoch = 100000
+cfg.train.max_iter = 100000
 # test parameters
 cfg.test = edict()
 cfg.test.imdb = 'coco_2014_minival'
