@@ -7,35 +7,13 @@ import numpy
 import numpy as np
 import torch
 def DetectionMatching(ious ,score ,ignore  ):
-    # print(ious.shape)
-    # print(score.shape)
-    # print(ignore.shape)
-    # torch.Size([449, 9])
-    # torch.Size([449, 1])
-    # torch.Size([9])
+
     assert ious.shape[0] ==score.shape[0] ,"DetectionMatching expects dim 1 of input 1 and dim 1 of input 2 to be the same ( %s != %s)"%(ious.shape[0],score.shape[0])
     assert ious.shape[1] == ignore.shape[0] , "DetectionMatching expects dim 2 of input 1 and dim 1 of input 3 to be the same ( %s != %s)"%(ious.shape[0],ignore.shape[0])
-    # print(score.shape)
-    
-    # print("ious:")
-    # sto = ious
-    # with open('scores.txt','w') as f:
-    #     f.write( str(sto) )
-    # print("input 33 : ")
-    # input()
-
     t_score = score.reshape(-1)
 
     det_order = torch.argsort(-t_score)
-
-    # print(det_order)
-
-    # print(ious.shape)
-    # print(ignore.shape)
-
     gt_order = ignore.argsort()
-    # print(score)
-    # print(det_order)
     n_dets = ious.shape[0]
     n_gt = ious.shape[1]
 

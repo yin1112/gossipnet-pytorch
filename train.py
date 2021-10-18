@@ -1,77 +1,40 @@
+# -*- coding:utf-8 -*-
+# @Time : 2021/9/8 15:22
+# @Author: yin
+# @File : run_net.py
 from __future__ import division
 
 import os
-import random
 import argparse
 import time
-import math
 import numpy as np
-
+from pprint import pprint
 import torch
 import torch.optim as optim
-import torch.backends.cudnn as cudnn
-from torch.utils import data
+import torch.backends.cudnn as cudnn    
 from nms_net_pytorch import cfg
-from nms_net_pytorch.class_weights import class_equal_weights
-from nms_net_pytorch.config import cfg_from_file
-from nms_net_pytorch.criterion import Criterion
-from nms_net_pytorch.dataset import   ShuffledDataset ,load_roi
-from nms_net_pytorch.matching import DetectionMatching
+from nms_net_pytorch.dataset import   ShuffledDataset 
 from nms_net_pytorch.net import Gnet
 from nms_net_pytorch.run_net import Run_net
-from nms_net_pytorch.ema import EMA
 import imdb
+from nms_net_pytorch.config import cfg_from_file
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='YOLO Detection')
-    parser.add_argument('-v', '--version', default='yolo',
-                        help='yolo')
-    parser.add_argument('-d', '--dataset', default='voc',
-                        help='voc or coco')
-    parser.add_argument('-hr', '--high_resolution', action='store_true', default=False,
-                        help='use high resolution to pretrain.')  
-    parser.add_argument('-ms', '--multi_scale', action='store_true', default=False,
-                        help='use multi-scale trick')                  
-    parser.add_argument('--batch_size', default=32, type=int, 
-                        help='Batch size for training')
-    parser.add_argument('--lr', default=1e-3, type=float, 
-                        help='initial learning rate')
-    parser.add_argument('-cos', '--cos', action='store_true', default=False,
-                        help='use cos lr')
-    parser.add_argument('-no_wp', '--no_warm_up', action='store_true', default=False,
-                        help='yes or no to choose using warmup strategy to train')
-    parser.add_argument('--wp_epoch', type=int, default=2,
-                        help='The upper bound of warm-up')
-    parser.add_argument('--start_epoch', type=int, default=0,
-                        help='start epoch to train')
-    parser.add_argument('-r', '--resume', default=None, type=str, 
-                        help='keep training')
-    parser.add_argument('--momentum', default=0.9, type=float, 
-                        help='Momentum value for optim')
-    parser.add_argument('--weight_decay', default=5e-4, type=float, 
-                        help='Weight decay for SGD')
-    parser.add_argument('--gamma', default=0.1, type=float, 
-                        help='Gamma update for SGD')
-    parser.add_argument('--num_workers', default=8, type=int, 
-                        help='Number of workers used in dataloading')
-    parser.add_argument('--eval_epoch', type=int,
-                            default=10, help='interval between evaluations')
-    parser.add_argument('--cuda', action='store_true', default=False,
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-co', '--config', default='conf.yaml')
+    parser.add_argument('-cu','--cuda', action='store_true', default=False,
                         help='use cuda.')
-    parser.add_argument('--tfboard', action='store_true', default=False,
-                        help='use tensorboard')
-    parser.add_argument('--debug', action='store_true', default=False,
-                        help='debug mode where only one image is trained')
-    parser.add_argument('--save_folder', default='weights/', type=str, 
-                        help='Gamma update for SGD')
+    parser.add_argument('--save_folder', default='weights/', type=str)
+    args, unparsed = parser.parse_known_args()
 
+    cfg_from_file(args.config)
     return parser.parse_args()
 
 
 def train():
     args = parse_args()
 
-    path_to_save = os.path.join(args.save_folder, args.dataset, args.version)
+    path_to_save = os.path.join(args.save_folder)
 
     os.makedirs(path_to_save, exist_ok=True)
 
@@ -86,7 +49,8 @@ def train():
     
     train_cfg = cfg.train
 
-    print("Setting Arguments.. : ", args)
+    print("Setting Arguments.. : ")
+    pprint(cfg)
     print("----------------------------------------------------------")
     print('Loading the dataset...')     
 
@@ -99,11 +63,11 @@ def train():
     print('The val_dataset size:',len(val_sets))
     print("----------------------------------------------------------")   
 
-    model = Gnet(train_imdb['num_classes'] * 2  + 7 ,device )
+    model = Gnet( 9,device )
     #print(model)
     model.to(device).train()
 
-    run_net = Run_net(device,torch.tensor(train_imdb['num_classes']),class_equal_weights(train_imdb))
+    run_net = Run_net(model , device,torch.tensor(train_imdb['num_classes']))
 
     # keep training
     if train_cfg.resume is not None:
@@ -117,21 +81,22 @@ def train():
                             momentum=train_cfg.momentum,
                             weight_decay=train_cfg.weight_decay
                             )
-    max_epoch = train_cfg.max_epoch
+    max_iter = train_cfg.max_iter
 
 
     t0 = time.time()
-    for epoch in range(max_epoch):
+    for iter in range(max_iter):
 
         tmp_lr = None
         for i in lr:
-            if epoch < i[0]:
+            if iter < i[0]:
                 set_lr(optimizer, i[1])
                 tmp_lr = i[1]
                 break
         
         # set data
-        run_net.setdata(get_per_data(train_sets , device))
+        run_net.setdata(*get_per_data(train_sets,device))
+        # apply(run_net.setdata , get_per_data(train_sets , device))
         # forward
         _ , _, _, _ ,\
                 loss_unnormed , loss_normed , loss= run_net.run_net()
@@ -141,19 +106,19 @@ def train():
         loss.backward()
         optimizer.step()
 
-        if epoch % train_cfg.display_iter:
+        if iter % train_cfg.display_iter ==0:
 
             t1 = time.time()
             print('[Epoch %d/%d][lr %.6f]'
                 '[loss_unnormed:  %.2f ][ loss_normed:  %.2f ][time:  %.2f]] '
-                    % (epoch+1, max_epoch, tmp_lr,
+                    % (iter+1, max_iter, tmp_lr,
                         loss_unnormed, loss_normed, t1-t0),
                     flush=True)
 
             t0 = time.time()
 
         # evaluation
-        if  len(val_sets)>0 and (epoch + 1) % train_cfg.val_iter == 0:
+        if  len(val_sets)>0 and (iter + 1) % train_cfg.val_iter == 0:
 
             model.trainable = False
             model.eval()
@@ -163,9 +128,10 @@ def train():
             for i, roi in enumerate(val_imdb['roidb']):
                 
                 #set data
-                run_net.setdata(get_per_data(val_sets , device))
+
+                run_net.setdata(*get_per_data(val_sets , device))
                 # evaluate
-                new_score , labels, weights, det_gt_matching ,\
+                new_score , labels, weights, _ ,\
                     _ , _ , _= run_net.run_net()
 
                 mask = (weights > 0.0).reshape(-1)
@@ -178,12 +144,12 @@ def train():
             labels = np.concatenate(all_labels, axis=0)
             classes = np.concatenate(all_classes, axis=0)
 
-            mAP, multiclass_ap, cls_ap =compute_aps(scores, classes, labels, val_imdb)
+            mAP, multiclass_ap, _ =compute_aps(scores, classes, labels, val_imdb)
 
             t1 = time.time()
             print('[Epoch %d/%d]'
                 '[mAP:  %.2f ][multiclass_ap:  %.2f ][time:  %.2f]] '
-                    % (epoch+1, max_epoch,
+                    % (iter+1, max_iter,
                         mAP, multiclass_ap, t1-t0),
                     flush=True)
             t0 = time.time()
@@ -193,10 +159,10 @@ def train():
             model.train()
 
         # save model
-        if (epoch + 1) % train_cfg.save_iter == 0:
-            print('Saving state, epoch:', epoch + 1)
+        if (iter + 1) % train_cfg.save_iter == 0:
+            print('Saving state, epoch:', iter + 1)
             torch.save(model.state_dict(), os.path.join(path_to_save, 
-                        '_' + repr(epoch + 1) + '.pth')
+                        '_' + repr(iter + 1) + '.pth')
                         )  
 
 
@@ -234,13 +200,6 @@ def compute_aps(scores, classes, labels, val_imdb):
     scores = scores[ord]
     labels = labels[ord]
     classes = classes[ord]
-
-    sto = scores
-    with open('scores2.txt','w') as f:
-        f.write( str(sto) )
-    sto = labels
-    with open('scores3.txt','w') as f:
-        f.write(str(sto) )
 
     num_objs = sum(np.sum(np.logical_not(roi['gt_crowd']))
                    for roi in val_imdb['roidb'])

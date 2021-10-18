@@ -4,8 +4,8 @@
 # @File : run_net.py
 import numpy as np
 import torch
-torch.set_printoptions(profile="full")
-np.set_printoptions(threshold = 1e6)
+# torch.set_printoptions(profile="full")
+# np.set_printoptions(threshold = 1e6)
 from nms_net_pytorch import cfg
 from nms_net_pytorch.criterion import Criterion
 from nms_net_pytorch.matching import DetectionMatching
@@ -13,9 +13,8 @@ from nms_net_pytorch.matching import DetectionMatching
 class Run_net:
 
 
-    def __init__(self ,gnet ,device ,num_classes ,class_weights ):
+    def __init__(self ,gnet ,device ,num_classes  ):
         self.num_classes = num_classes.to(device)
-        self.class_weights = class_weights.to(device)
         self.criterion = Criterion().to(device)
         self.gnet = gnet
         self.device = device
@@ -34,95 +33,44 @@ class Run_net:
 
 
         self.multiclass = self.num_classes > 1
-        ''' 
-            dets_boxdata:  torch.Size([519, 7])
-            gt_boxesdata:  torch.Size([17, 7])
 
-        '''
+        #transform data
         self.dets_boxdata = self._xyxy_to_boxdata(self.dets)
         self.gt_boxesdata = self._xyxy_to_boxdata(self.gt_boxes)
 
-        '''
-            det_anno_iou =   torch.Size([519, 17])
-            det_det_iou =    torch.Size([519, 519])
-        '''
+        #get iou
         self.det_anno_iou = self._iou(self.dets_boxdata, self.gt_boxesdata, crowd=self.gt_crowd)
         self.det_det_iou = self._iou(self.dets_boxdata, self.dets_boxdata)
 
 
+
+        # Make dt boxes and gt boxes with different categories shield each other by setting IOU to 0 .
         if self.multiclass:
-            '''
-                det_anno_iou =  [449, 9]
-            '''
             same_class = torch.eq(self.det_classes.reshape(-1, 1),
                                   self.gt_classes.reshape(1, -1))
             zeros = torch.zeros_like(self.det_anno_iou).to(self.device)
             self.det_anno_iou = torch.where(same_class, self.det_anno_iou, zeros)
 
 
-        '''
-            neighbor_pair_idxs = torch.Size([52569, 2])
 
-        '''
         neighbor_pair_idxs = (self.det_det_iou >= cfg.gnet.neighbor_thresh).nonzero( as_tuple=False)
         pair_c_idxs = neighbor_pair_idxs[:, 0]
         pair_n_idxs = neighbor_pair_idxs[:, 1]
         self.num_dets = self.dets.shape[0]
 
 
-        '''
-            pw_feats = torch.Size([52569, 167])
-        '''
-        pw_feats = (self._geometry_feats(pair_c_idxs, pair_n_idxs) * cfg.gnet.pw_feat_multiplyer) # check ok 
-        '''
-            new_score = torch.Size([519, 1])
-        '''
+        pw_feats = (self._geometry_feats(pair_c_idxs, pair_n_idxs) * cfg.gnet.pw_feat_multiplyer)
+
         new_score = self.gnet.forward(self.num_dets, pw_feats, pair_c_idxs, pair_n_idxs)
         
-        '''
-            labels = torch.Size([519])
-            weights = torch.Size([519, 1]) 
-            det_gt_matching = torch.Size([519])
-        '''
+
         labels, weights, det_gt_matching = \
-            DetectionMatching(self.det_anno_iou, new_score, self.gt_crowd) #check ok 
+            DetectionMatching(self.det_anno_iou, new_score, self.gt_crowd) 
 
-        '''
-            self.class_weights = (81,)
-            det_crowd = torch.Size([519])
-            det_class = torch.Size([519])
-        '''
-        self.class_weights = self.class_weights.reshape(-1)
-        if self.class_weights is None:  
-            self.class_weights = torch.ones((self.num_classes + 1), dtype=torch.float32).to(self.device)
-        # else:
-        #     class_weights = torch.tensor(self.class_weights, dtype=torch.float32)
 
-        self.gt_crowd = self.gt_crowd.reshape(-1)
-        if self.gt_crowd.shape[0] > 0:
-            det_crowd = self.gt_crowd[torch.clamp(det_gt_matching, min=0).to(torch.long)]
-            det_crowd[det_gt_matching==-1] = 0
-        else:
-            det_crowd = torch.zeros_like(labels, dtype=torch.bool).to(self.device)
         
-        if self.gt_crowd.shape[0] > 0:
-            det_class = self.gt_classes[torch.clamp(det_gt_matching, min=0).to(torch.long)].to(torch.long)
-            det_class[det_gt_matching==-1] = 0
 
-        else:
-            det_class = torch.zeros_like(labels, dtype=torch.long).to(self.device)
-        
-        zeros = torch.zeros_like(det_class).to(self.device)
-
-        det_class = torch.where(
-            torch.logical_and(det_gt_matching >= 0, torch.logical_not(det_crowd)),
-            det_class,
-            zeros
-        )
-
-        sample_weights = self.class_weights[det_class.to(torch.long)]
-
-        weights = (weights.reshape(-1, 1) * sample_weights.reshape(-1, 1)).reshape(-1)
+        weights =weights.reshape(-1)
 
         prediction = new_score.reshape(-1)
 
@@ -159,8 +107,8 @@ class Run_net:
         a_area = torch.reshape(a[6], [-1, 1])
         b_area = torch.reshape(b[6], [1, -1])
 
-        intersection = self._intersection(a, b)  # 求交集
-        union = torch.sub(torch.add(a_area, b_area), intersection)  # 并集
+        intersection = self._intersection(a, b)  
+        union = torch.sub(torch.add(a_area, b_area), intersection) 
         iou = torch.div(intersection, union)
         if crowd is None:
             return iou
@@ -192,20 +140,30 @@ class Run_net:
 
     def _geometry_feats(self, c_idxs, n_idxs):
 
-        if self.multiclass:
+        # In the case of multiple categories, we made a small change. 
+        # In the author's code, it uses [dets_num, catalogs] to save fractional features. 
+        # We compress it into [dets_num, 1]
+        # Because we believe that there is no concept of category here 
+        # (in the previous steps, the situation of different categories has been eliminated, 
+        # that is, they are invisible between different categories). 
+        # Therefore, compressing the space will accelerate the convergence of the network 
+        # and alleviate the insufficient training of some categories due to the uneven sample 
+        # categories in the original method.
+        
+        # if self.multiclass:
 
-            mc_score_idxs = torch.arange(self.num_dets).reshape(-1, 1)
+        #     mc_score_idxs = torch.arange(self.num_dets).reshape(-1, 1)
 
-            mc_score_idxs = torch.cat(
-                (mc_score_idxs, torch.ones_like(mc_score_idxs) * ((self.det_classes - 1).reshape(-1, 1))), 1)
+        #     mc_score_idxs = torch.cat(
+        #         (mc_score_idxs, torch.ones_like(mc_score_idxs) * ((self.det_classes - 1).reshape(-1, 1))), 1)
 
-            tmp_scores = torch.zeros([self.num_dets, self.num_classes])
+        #     tmp_scores = torch.zeros([self.num_dets, self.num_classes])
 
-            tmp_scores[mc_score_idxs[:, 0], mc_score_idxs[:, 1]] = self.det_scores
+        #     tmp_scores[mc_score_idxs[:, 0], mc_score_idxs[:, 1]] = self.det_scores
 
 
-        else:
-            tmp_scores = self.det_scores.unsqueeze(-1)
+        # else:
+        tmp_scores = self.det_scores.unsqueeze(-1)
            
         c_score = tmp_scores[c_idxs]
         n_score = tmp_scores[n_idxs]

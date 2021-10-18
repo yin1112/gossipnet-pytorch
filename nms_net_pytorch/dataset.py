@@ -25,15 +25,6 @@ def load_roi(need_images, roi, is_training=False):
     # make a copy so we don't keep the loaded image around
     roi = dict(roi)
 
-    # if is_training:
-    #     maxdet = cfg.train.max_num_detections
-    #     if maxdet > 0 and maxdet < roi['det_classes'].size:
-    #         sel = np.random.choice(roi['det_classes'].size, size=maxdet,
-    #                                replace=False)
-    #         roi['det_classes'] = roi['det_classes'][sel]
-    #         roi['dets'] = roi['dets'][sel, :]
-    #         roi['det_scores'] = roi['det_scores'][sel]
-
     im_scale = 1.0
     if need_images:
         roi['image'], im_scale = load_image(roi['filename'], roi['flipped'])
@@ -87,8 +78,6 @@ class ShuffledDataset(torch.utils.data.Dataset):
         db_inds = self._perm[self._cur:self._cur + self._batch_size]
         self._cur += self._batch_size
         assert len(db_inds) == 1
-
-        # db_inds[0] = 20
 
         roi = self._roidb[db_inds[0]]
         roi = load_roi(self._need_images, roi, is_training=True)
