@@ -5,20 +5,29 @@ _Learning non-maximum suppression. Jan Hosang, Rodrigo Benenson, Bernt Schiele. 
 
 You can find the project page with downloads here: https://mpi-inf.mpg.de/learning-nms
 
-## Software Requirements
+# Some optimization
+We have done some optimization on the original author's code (in the production of manual features, we have compressed the size of multi category features). This optimization has greatly improved the multiclass AP while keeping the map from getting worse .
+The following is the validation data after 300000 training rounds
+
+| Original method  | mAP |  multiclass AP |
+| ------------- | ------------- | ------------- |
+| Original method  | 44.3  | 37.8 |
+| After optimization  | 44.0 | 47.9 |
+
+# Software Requirements
 - torch : 1.7.1.post2
 - numpy : 1.19.5
 - protoc : libprotoc 3.13.0
 - scipy : 1.1.0
-## First
+# First
 
 Run `make` in the home directory to compile protobufs
 
-## Second
+# Second
 
 Download the files according to the addresses in `./data/README` and `./data/coco/annotations/README` files
 
-## Third
+# Third
 
 run `python train.py --config=experiments/coco_person/conf.yaml` 
 
