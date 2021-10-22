@@ -7,12 +7,21 @@ You can find the project page with downloads here: https://mpi-inf.mpg.de/learni
 
 # Some optimization
 We have done some optimization on the original author's code (in the production of manual features, we have compressed the size of multi category features). This optimization has greatly improved the multiclass AP while keeping the map from getting worse .
-The following is the validation data after 300000 training rounds
+
+The following is the validation data after the 300000 training round.
+(tensorflow) 
 
 | Original method  | mAP |  multiclass AP |
 | ------------- | ------------- | ------------- |
 | Original method  | 44.3  | 37.8 |
 | After optimization  | 44.0 | 47.9 |
+
+The following is the validation data after the 20000 training round.
+(pytorch) 
+| Original method  | mAP |  multiclass AP |
+| ------------- | ------------- | ------------- |
+| Original method  |  |  |
+| After optimization  |  |  |
 
 # Software Requirements
 - torch : 1.7.1.post2
