@@ -15,7 +15,7 @@ class Run_net:
 
     def __init__(self ,gnet ,device ,num_classes  ):
         self.num_classes = num_classes.to(device)
-        self.criterion = Criterion().to(device)
+        self.criterion = Criterion(device).to(device)
         self.gnet = gnet
         self.device = device
 
@@ -67,8 +67,10 @@ class Run_net:
         labels, weights, det_gt_matching = \
             DetectionMatching(self.det_anno_iou, new_score, self.gt_crowd) 
 
-
-        
+        labels.to(self.device)
+        weights.to(self.device)
+        det_gt_matching.to(self.device)
+        new_score.to(self.device)
 
         weights =weights.reshape(-1)
 
