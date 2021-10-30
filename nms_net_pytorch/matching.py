@@ -13,7 +13,7 @@ def DetectionMatching(ious ,score ,ignore  ):
     t_score = score.reshape(-1)
 
     det_order = torch.argsort(-t_score)
-    gt_order = ignore.argsort()
+    gt_order = ignore.to(torch.int8).argsort()
     n_dets = ious.shape[0]
     n_gt = ious.shape[1]
 
