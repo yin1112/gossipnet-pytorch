@@ -144,8 +144,6 @@ def train():
                 new_score = new_score.reshape(-1)
                 roi_det_classes = torch.tensor(roi['det_classes']).reshape(-1)
 
-                print(roi_det_classes.shape)
-                print(mask.shape)
                 all_labels.append(labels[mask].cpu().numpy())
                 all_scores.append(new_score[mask].cpu().numpy())
                 all_classes.append(roi_det_classes[mask])
