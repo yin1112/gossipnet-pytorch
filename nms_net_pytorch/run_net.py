@@ -67,10 +67,10 @@ class Run_net:
         labels, weights, det_gt_matching = \
             DetectionMatching(self.det_anno_iou, new_score, self.gt_crowd) 
 
-        labels.to(self.device)
-        weights.to(self.device)
-        det_gt_matching.to(self.device)
-        new_score.to(self.device)
+        labels =labels.to(self.device)
+        weights =weights.to(self.device)
+        det_gt_matching =det_gt_matching.to(self.device)
+        new_score =new_score.to(self.device)
 
         weights =weights.reshape(-1)
 
@@ -78,6 +78,7 @@ class Run_net:
 
         sample_loss = self.criterion(prediction, labels)
 
+        
         weights_losses = sample_loss.reshape(-1, 1) * weights.reshape(-1, 1)
 
         loss_unnormed = torch.sum(weights_losses)
@@ -151,9 +152,13 @@ class Run_net:
         # Therefore, compressing the space will accelerate the convergence of the network 
         # and alleviate the insufficient training of some categories due to the uneven sample 
         # categories in the original method.
-        
-        # if self.multiclass:
 
+        #our method
+        tmp_scores = self.det_scores.unsqueeze(-1)
+
+        #old method
+        # if self.multiclass:
+            
         #     mc_score_idxs = torch.arange(self.num_dets).reshape(-1, 1)
 
         #     mc_score_idxs = torch.cat(
@@ -165,7 +170,7 @@ class Run_net:
 
 
         # else:
-        tmp_scores = self.det_scores.unsqueeze(-1)
+        #     tmp_scores = self.det_scores.unsqueeze(-1)
            
         c_score = tmp_scores[c_idxs]
         n_score = tmp_scores[n_idxs]
