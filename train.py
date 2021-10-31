@@ -136,14 +136,18 @@ def train():
 
                 run_net.setdata(*get_per_data(val_sets , device))
                 # evaluate
-                new_score , labels, weights, _ ,\
-                    _ , _ , _= run_net.run_net()
+                with torch.no_grad():
+                    new_score , labels, weights, _ ,\
+                        _ , _ , _= run_net.run_net()
 
                 mask = (weights > 0.0).reshape(-1)
                 new_score = new_score.reshape(-1)
                 roi_det_classes = torch.tensor(roi['det_classes']).reshape(-1)
-                all_labels.append(labels[mask].detach().numpy())
-                all_scores.append(new_score[mask].detach().numpy())
+
+                print(roi_det_classes.shape)
+                print(mask.shape)
+                all_labels.append(labels[mask].cpu().numpy())
+                all_scores.append(new_score[mask].cpu().numpy())
                 all_classes.append(roi_det_classes[mask])
             scores = np.concatenate(all_scores, axis=0)
             labels = np.concatenate(all_labels, axis=0)
@@ -173,7 +177,8 @@ def train():
 
 def get_dataset(dir,is_training = True):
     train_imdb = imdb.get_imdb(dir , is_training=is_training)
-    return ShuffledDataset(train_imdb) , train_imdb 
+    
+    return ShuffledDataset(train_imdb,is_training) , train_imdb 
 
 def get_per_data(train_sets , device):
     roi = train_sets.next_batch()
