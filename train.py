@@ -40,7 +40,9 @@ def train():
 
     # cuda
     if args.cuda:
+        print("----------------")
         print('use cuda')
+        print("---------------")
         cudnn.benchmark = True
         device = torch.device("cuda")
     else:
@@ -54,8 +56,8 @@ def train():
     print("----------------------------------------------------------")
     print('Loading the dataset...')     
 
-    train_sets,train_imdb= get_dataset(True)
-    val_sets , val_imdb = get_dataset(False)
+    train_sets,train_imdb= get_dataset(cfg.train.imdb,True)
+    val_sets , val_imdb = get_dataset(cfg.test.imdb,False)
     assert train_imdb['num_classes'] == val_imdb['num_classes']
 
     print('Training model on:', train_cfg.imdb)
@@ -63,6 +65,7 @@ def train():
     print('The val_dataset size:',len(val_sets))
     print("----------------------------------------------------------")   
 
+    # model = Gnet(train_imdb['num_classes'] * 2  + 7 , device)
     model = Gnet( 9,device )
     #print(model)
     model.to(device).train()
@@ -127,6 +130,8 @@ def train():
             all_classes = []
             for i, roi in enumerate(val_imdb['roidb']):
                 
+                if 'dets' not in roi or roi['dets'].size == 0:
+                    continue
                 #set data
 
                 run_net.setdata(*get_per_data(val_sets , device))
@@ -166,8 +171,8 @@ def train():
                         )  
 
 
-def get_dataset(is_training = True):
-    train_imdb = imdb.get_imdb(cfg.train.imdb , is_training=is_training)
+def get_dataset(dir,is_training = True):
+    train_imdb = imdb.get_imdb(dir , is_training=is_training)
     return ShuffledDataset(train_imdb) , train_imdb 
 
 def get_per_data(train_sets , device):
