@@ -58,15 +58,20 @@ def load_image(path, flipped):
     return im, im_scale
 
 class ShuffledDataset(torch.utils.data.Dataset):
-    def __init__(self, imdb):
+    def __init__(self, imdb , is_training):
         self._imdb = imdb
         self._roidb = imdb['roidb']
         self._batch_size = 1
         self._need_images = False
-        self._shuffle()
+        self.is_training = is_training
+        self._cur = 0
+        self._perm = np.arange(len(self._roidb))
+        if self.is_training:
+            self._shuffle()
 
     def _shuffle(self):
-        self._perm = np.random.permutation(np.arange(len(self._roidb)))
+        if self.is_training:
+            self._perm = np.random.permutation(np.arange(len(self._roidb)))
         if DEBUG:
             print(self._perm)
         self._cur = 0
