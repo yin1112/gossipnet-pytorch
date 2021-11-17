@@ -21,7 +21,7 @@ The following is the validation data after the 20000 training round.(I haven't r
 | Original method  | mAP |  multiclass AP |
 | ------------- | ------------- | ------------- |
 | Original method  |  |  |
-| After optimization  |  |  |
+| After optimization  | 41.93 | 46.26 |
 
 # Software Requirements
 - torch : 1.7.1.post2
