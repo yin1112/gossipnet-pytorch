@@ -154,23 +154,23 @@ class Run_net:
         # categories in the original method.
 
         #our method
-        tmp_scores = self.det_scores.unsqueeze(-1)
+        #tmp_scores = self.det_scores.unsqueeze(-1)
 
         #old method
-        # if self.multiclass:
+        if self.multiclass:
             
-        #     mc_score_idxs = torch.arange(self.num_dets).reshape(-1, 1)
+            mc_score_idxs = torch.arange(self.num_dets).reshape(-1, 1).to(self.device)
 
-        #     mc_score_idxs = torch.cat(
-        #         (mc_score_idxs, torch.ones_like(mc_score_idxs) * ((self.det_classes - 1).reshape(-1, 1))), 1)
+            mc_score_idxs = torch.cat(
+                (mc_score_idxs, torch.ones_like(mc_score_idxs).to(self.device) * ((self.det_classes - 1).reshape(-1, 1))), 1)
 
-        #     tmp_scores = torch.zeros([self.num_dets, self.num_classes])
+            tmp_scores = torch.zeros([self.num_dets, self.num_classes]).to(self.device)
 
-        #     tmp_scores[mc_score_idxs[:, 0], mc_score_idxs[:, 1]] = self.det_scores
+            tmp_scores[mc_score_idxs[:, 0], mc_score_idxs[:, 1]] = self.det_scores
 
 
-        # else:
-        #     tmp_scores = self.det_scores.unsqueeze(-1)
+        else:
+            tmp_scores = self.det_scores.unsqueeze(-1)
            
         c_score = tmp_scores[c_idxs]
         n_score = tmp_scores[n_idxs]
