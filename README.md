@@ -16,7 +16,7 @@ The following is the validation data after the 300000 training round.
 | Original method  | 44.3  | 37.8 |
 | After optimization  | 44.0 | 47.9 |
 
-The following is the validation data after the 20000 training round.(I haven't recorded it yet. I'll make it up later ..)
+The following is the validation data after the 20000 training round.
 (pytorch) 
 | Original method  | mAP |  multiclass AP |
 | ------------- | ------------- | ------------- |
