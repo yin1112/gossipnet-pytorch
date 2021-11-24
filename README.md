@@ -20,7 +20,7 @@ The following is the validation data after the 20000 training round.(I haven't r
 (pytorch) 
 | Original method  | mAP |  multiclass AP |
 | ------------- | ------------- | ------------- |
-| Original method  |  |  |
+| Original method  | 40.55 | 36.05 |
 | After optimization  | 41.93 | 46.26 |
 
 # Software Requirements
