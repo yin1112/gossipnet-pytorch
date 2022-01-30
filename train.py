@@ -96,9 +96,23 @@ def train():
                 set_lr(optimizer, i[1])
                 tmp_lr = i[1]
                 break
-        
+        roi = train_sets.next_batch()
+        dets = roi['dets']
+        dets_class = roi['det_classes']
+        dets_score = roi['det_scores']
+        gt_boxes = roi['gt_boxes']
+        gt_classes = roi['gt_classes']
+        gt_crowd = roi['gt_crowd']
+    
+        dets = torch.tensor(dets).to(device)
+        det_classes = torch.tensor(dets_class).to(device)
+        det_scores = torch.tensor(dets_score).to(device)
+        gt_boxes = torch.tensor(gt_boxes).to(device)
+        gt_classes = torch.tensor(gt_classes).to(device)
+        gt_crowd = torch.tensor(gt_crowd).to(device)
         # set data
-        run_net.setdata(*get_per_data(train_sets,device))
+        run_net.setdata(dets,det_scores,det_classes,\
+                        gt_boxes,gt_classes,gt_crowd)
         # apply(run_net.setdata , get_per_data(train_sets , device))
         # forward
         _ , _, _, _ ,\
@@ -130,11 +144,28 @@ def train():
             all_classes = []
             for i, roi in enumerate(val_imdb['roidb']):
                 
+                    
+                #set data
+                dets = roi['dets']
+                dets_class = roi['det_classes']
+                dets_score = roi['det_scores']
+                gt_boxes = roi['gt_boxes']
+                gt_classes = roi['gt_classes']
+                gt_crowd = roi['gt_crowd']
+            
+                dets = torch.tensor(dets).to(device)
+                det_classes = torch.tensor(dets_class).to(device)
+                det_scores = torch.tensor(dets_score).to(device)
+                gt_boxes = torch.tensor(gt_boxes).to(device)
+                gt_classes = torch.tensor(gt_classes).to(device)
+                gt_crowd = torch.tensor(gt_crowd).to(device)
+                # set data
+                run_net.setdata(dets,det_scores,det_classes,\
+                                gt_boxes,gt_classes,gt_crowd)
+                                
                 if 'dets' not in roi or roi['dets'].size == 0:
                     continue
-                #set data
-
-                run_net.setdata(*get_per_data(val_sets , device))
+                
                 # evaluate
                 with torch.no_grad():
                     new_score , labels, weights, _ ,\
@@ -143,7 +174,6 @@ def train():
                 mask = (weights > 0.0).reshape(-1)
                 new_score = new_score.reshape(-1)
                 roi_det_classes = torch.tensor(roi['det_classes']).reshape(-1)
-
                 all_labels.append(labels[mask].cpu().numpy())
                 all_scores.append(new_score[mask].cpu().numpy())
                 all_classes.append(roi_det_classes[mask])
@@ -178,26 +208,6 @@ def get_dataset(dir,is_training = True):
     
     return ShuffledDataset(train_imdb,is_training) , train_imdb 
 
-def get_per_data(train_sets , device):
-    roi = train_sets.next_batch()
-    dets = roi['dets']
-    dets_class = roi['det_classes']
-    dets_score = roi['det_scores']
-    gt_boxes = roi['gt_boxes']
-    gt_classes = roi['gt_classes']
-    gt_crowd = roi['gt_crowd']
-
-    dets = torch.tensor(dets).to(device)
-    det_classes = torch.tensor(dets_class).to(device)
-    det_scores = torch.tensor(dets_score).to(device)
-    gt_boxes = torch.tensor(gt_boxes).to(device)
-    gt_classes = torch.tensor(gt_classes).to(device)
-    gt_crowd = torch.tensor(gt_crowd).to(device)
-    if(dets.shape[0] ==1):
-        return get_per_data(train_sets , device)
-    else :
-        return dets,det_scores,det_classes,\
-                        gt_boxes,gt_classes,gt_crowd
 def set_lr(optimizer, lr):
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
