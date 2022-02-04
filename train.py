@@ -70,7 +70,7 @@ def train():
     #print(model)
     model.to(device).train()
 
-    run_net = Run_net(model , device,torch.tensor(train_imdb['num_classes']))
+    run_net = Run_net(model , device,train_imdb['num_classes'])
 
     # keep training
     if train_cfg.resume is not None:
