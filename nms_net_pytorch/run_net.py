@@ -14,7 +14,7 @@ class Run_net:
 
 
     def __init__(self ,gnet ,device ,num_classes  ):
-        self.num_classes = num_classes.to(device)
+        self.num_classes = num_classes
         self.criterion = Criterion(device).to(device)
         self.gnet = gnet
         self.device = device
@@ -50,6 +50,11 @@ class Run_net:
                                   self.gt_classes.reshape(1, -1))
             zeros = torch.zeros_like(self.det_anno_iou).to(self.device)
             self.det_anno_iou = torch.where(same_class, self.det_anno_iou, zeros)
+           
+            same_class = torch.eq(self.det_classes.reshape(-1, 1),
+                                  self.det_classes.reshape(1, -1))
+            zeros = torch.zeros_like(self.det_det_iou).to(self.device)
+            self.det_det_iou = torch.where(same_class, self.det_det_iou, zeros)
 
 
 
