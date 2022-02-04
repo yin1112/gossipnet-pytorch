@@ -11,14 +11,14 @@ We have done some optimization on the original author's code (in the production 
 The following is the validation data after the 300000 training round.
 (tensorflow) 
 
-| Original method  | mAP |  multiclass AP |
+|   | mAP |  multiclass AP |
 | ------------- | ------------- | ------------- |
 | Original method  | 44.3  | 37.8 |
 | After optimization  | 44.0 | 47.9 |
 
 The following is the validation data after the 20000 training round.
 (pytorch) 
-| Original method  | mAP |  multiclass AP |
+|  | mAP |  multiclass AP |
 | ------------- | ------------- | ------------- |
 | Original method  | 40.55 | 36.05 |
 | After optimization  | 41.93 | 46.26 |
